@@ -3,6 +3,7 @@
 <title>Get me to Bournemouth</title>
   <link rel="stylesheet" type=text/css href="./main.css">
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="user-scalable=no, width=device-width" />
 
   <script src="http://cdn.leafletjs.com/leaflet-0.5/leaflet.js"></script>
   <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.5/leaflet.css" />
@@ -91,7 +92,7 @@ function initMap() {
   map = new L.Map('map');                       
   
   L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-     attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors',
+     attribution: 'Base map &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors',
      maxZoom: 18
   }).addTo(map);
   map.attributionControl.setPrefix(''); // Don't show the 'Powered by Leaflet' text.
@@ -271,8 +272,17 @@ function swap(coords) {
 </div>
 
 <div id="map">
-
   <div style="display: none;" id="results"></div>
+  
+  <div id="transportapi-credit">
+  Journey planning by<br>
+  <a href="http://www.transportapi.com" title="TransportAPI - Powering change and innovation in transport"><img src="http://www.transportapi.com/transportapi-logo-100px.png" border="0"></a>
+  </div>
+  
+  <div id="github-link">
+    <div style="width:26px; height:26px; float:left;"> </div>
+    <a href="https://github.com/harry-wood/get-me-to-bournemouth">More information<br>&amp; code on github</a>
+  </div>
 </div>
 
 </body>
