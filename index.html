@@ -1,0 +1,279 @@
+<html>
+<head>
+<title>Get me to Bournemouth</title>
+  <link rel="stylesheet" type=text/css href="./main.css">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+  <script src="http://cdn.leafletjs.com/leaflet-0.5/leaflet.js"></script>
+  <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.5/leaflet.css" />
+  <!--[if lte IE 8]>
+     <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.5/leaflet.ie.css" />
+  <![endif]-->
+    
+  <script src="http://code.jquery.com/jquery-1.11.2.min.js"></script>
+  <script src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+ 
+  <script>
+
+var gettingpos;
+var lat;
+var lon;
+var map;
+var resultsLayer;
+
+function init() {
+  gettingpos = false;
+  //$('#fakebtn').hide();
+}
+
+function getLocation() {
+  $('#message').html("Getting your location...<br><img src='https://upload.wikimedia.org/wikipedia/commons/d/de/Ajax-loader.gif'>");
+  $('#gobtn').hide();
+  
+  // Check that the geolocation object is available
+  if (navigator.geolocation) {
+    // If we get a position, call the gotPosition function
+    navigator.geolocation.getCurrentPosition(gotPosition, positionError);
+    
+    //The position getting call is in progress. Set a timeout
+    gettingpos = true;
+    
+    console.log("set timeout");
+    setTimeout('positionTimeout()', 5000);
+      
+  } else {
+    //navigator.geolocation not available
+    $('#message').html("Couldn't get your location on this device");
+    tryAgain();
+  }
+}
+
+function tryAgain() {
+  $('#gobtn').prop('value', 'Try again');
+  $('#fakebuttons').show();
+  $('#gobtn').show();
+}
+
+function positionError(error) {
+  gettingpos=false;
+  $('#message').html("Failed to get your location");
+  console.log("Failed to get location" +
+      "\nnavigator.geolocation.getCurrentPosition error:" + 
+      "\n'"+ error.message + "' (code " + error.code + ")");  
+  tryAgain();
+}
+
+function positionTimeout() {
+  console.log("positionTimeout");
+  if (gettingpos) {
+    gettingpos=false;
+    $('#message').html("<p>Didn't manage to get your location just yet. <a href=\"javascript:history.go(0);\">Refresh to try again</a><p><p>Note: You'll need to allow sharing of your location to use this.</p>");
+    tryAgain();
+  }
+}
+
+function gotPosition(pos) {
+  gettingpos = false
+  lat = pos.coords.latitude;
+  lon = pos.coords.longitude;
+  //accuracy = Math.round(pos.coords.accuracy);
+  initMap();
+}
+
+
+function initMap() {
+  $('#message').html("");
+  $('#gotbtn').hide();
+  $('#fakebtn').hide();
+  $('#startscreen').hide();
+  $('#map').show();
+  
+  map = new L.Map('map');                       
+  
+  L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+     attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors',
+     maxZoom: 18
+  }).addTo(map);
+  map.attributionControl.setPrefix(''); // Don't show the 'Powered by Leaflet' text.
+  
+  var latlng = new L.LatLng(lat,lon); 
+  map.setView(latlng, 13);
+  var marker = new L.Marker(latlng);
+  map.addLayer(marker);
+  
+  resultsLayer = new L.LayerGroup();
+  map.addLayer(resultsLayer);
+  
+  
+  journeyPlanFromHere();
+}
+
+//Give distance in km
+function haversine() {
+  var radians = Array.prototype.map.call(arguments, function(deg) { return deg/180.0 * Math.PI; });
+  var lat1 = radians[0], lon1 = radians[1], lat2 = radians[2], lon2 = radians[3];
+  var R = 6372.8; // km
+  var dLat = lat2 - lat1;
+  var dLon = lon2 - lon1;
+  var a = Math.sin(dLat / 2) * Math.sin(dLat /2) + Math.sin(dLon / 2) * Math.sin(dLon /2) * Math.cos(lat1) * Math.cos(lat2);
+  var c = 2 * Math.asin(Math.sqrt(a));
+  return R * c;
+}
+
+function journeyPlanFromHere() {
+
+  toLat = 50.7273;
+  toLon = -1.8640;
+  
+  var straightLineDistance = haversine(lat, lon, toLat, toLon);
+  
+  if (straightLineDistance < 1.5) {
+    $("#results").show();
+    $("#results").html("<h2>Congratulations!<br>You are already in Bournemouth</h2>");
+  } else {
+    journeyPlan("lonlat:" + lon + "," + lat,
+                "lonlat:" + toLon + "," + toLat + ",1000"); 
+  }
+}
+
+
+function journeyPlan(fromParam, toParam) {
+  
+  console.log('journeyPlan');
+  
+  var url = "http://fcc.transportapi.com/v3/uk/" +  //http://transportapi.com/v3/uk/" +
+            "public/journey/from/" + fromParam +
+            "/to/" + toParam + 
+            ".json?" +
+            "region=southeast&"
+  //"api_key=02ab256e0fbf6f2c7826e4912b71d5ae&app_id=aa052972";
+            
+  console.log('Calling url:' + url);
+  $("#results").show();
+  $("#results").html("Calling journey planner...<br><img src='https://upload.wikimedia.org/wikipedia/commons/d/de/Ajax-loader.gif'>");
+
+  var p = this;
+  
+  $.ajax({
+       url : url,
+       dataType : 'jsonp',
+       timeout : 60000
+     })
+     .fail(function() {
+       console.log('transportAPIcall FAIL. URL:' + url);
+       $("#results").html("Journey plan error");
+     })
+     .done(function(data) {
+     
+       console.log("data:");
+       console.log(data);
+       
+       var from_coord = [0,0];
+       var last_coord = [0,0];
+      
+       //Loop through the routes and route parts and add polylines to the map 
+       var routes = data['routes'];
+       
+       p.displayRoutesResult(routes);
+       
+       
+       $('#gobtn').show();
+     });
+   
+}
+
+function displayRoutesResult(routes) {
+  
+  if (routes && routes.length>0) {
+    var results = routes.length + " alternative routes";
+    
+    for (var rno=0; rno<routes.length; rno++) {
+      var route = routes[rno];
+      var routeParts = route['route_parts'];
+      
+      results += "<li>";      
+      for (var rpno=0; rpno<routeParts.length; rpno++) {
+        var routeLinesGeoJSON = [ ];
+        var routePart = routeParts[rpno];
+        var mode = routePart['mode'];
+        var coordinates = routePart['coordinates'];
+    
+        //Choose line colour
+        var colour = "YELLOW";
+        if (mode=="foot") colour = "LIME";
+        if (mode=="tube") colour = "BLACK";
+        if (mode=="dlr") colour = "BLACK";
+        if (mode=="bus") colour = "RED"; 
+        if (mode=="train") colour = "PURPLE"; 
+        if (mode=="tram") colour = "GREEN"; 
+        if (mode=="overground") colour = "ORANGE";
+        if (mode=="taxi") colour = "DARKGREY";
+    
+        if (coordinates!=null && coordinates.length > 0) {
+          if (rpno==0 && rno==0) {
+            //ignore first value
+          } else {
+            var polyline = L.polyline( swap(coordinates), { color: colour}).addTo(resultsLayer);
+          }
+        }
+        
+        results += " <span class='routePartMode' style='color:" + colour + ";'>" + mode + "</span>";
+    
+      } //next rpno
+    } //next rno
+    
+    
+    $("#results").html(results);
+    
+    var from_coord = routes[0]['route_parts'][0]['coordinates'][0];
+    var to_coordinates = routes[rno-1]['route_parts'][rpno-1]['coordinates']
+    var to_coord = to_coordinates[to_coordinates.length-1];
+    
+    map.fitBounds([
+         [from_coord[1], from_coord[0]],
+         [to_coord[1], to_coord[0]]
+    ]);
+    
+  } else {
+    //TODO: handle an 'identification' response
+    $('#results').text("No routes found");
+  }
+
+}
+
+//Swap lat/lon around in a 2D coord array
+//swapping form the standard geojson lon,lat to the leaflet polyline lat,lon 
+function swap(coords) {
+  var swapped = [];
+  for (var i=0; i<coords.length; i++) {
+    swapped.push( [coords[i][1], coords[i][0]] );
+  }
+  return swapped;
+}
+
+
+
+</script>
+  
+</head>
+<body onLoad="init();">
+
+<div id="startscreen">
+  <h1 id="bigtitle">Get me to Bournemouth!</h1>
+  
+  <div id="message"></div>
+  
+  <input type="button" id="gobtn" value="Go!" onClick="getLocation();" />
+  <div style="display: none;" id="fakebuttons">
+    <input type="button" value="Test location" onClick="lat=50.6118; lon=-1.9599; initMap();" />
+    <input type="button" value="Test location 2" onClick="lat=51.52797; lon=-0.13206; initMap();" />
+  </div>
+</div>
+
+<div id="map">
+
+  <div style="display: none;" id="results"></div>
+</div>
+
+</body>
+</html>
