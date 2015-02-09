@@ -109,7 +109,10 @@ function initMap() {
   journeyPlanFromHere();
 }
 
-//Give distance in km
+//Returns distance in km between two points
+//Takes four params lon1,lat1,lon2,lat2 (via some bizarre prototype fiddling)
+//This is a GPL snippet from:
+//http://rosettacode.org/wiki/Haversine_formula#JavaScript
 function haversine() {
   var radians = Array.prototype.map.call(arguments, function(deg) { return deg/180.0 * Math.PI; });
   var lat1 = radians[0], lon1 = radians[1], lat2 = radians[2], lon2 = radians[3];
