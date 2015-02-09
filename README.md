@@ -27,6 +27,6 @@ The site is just javascript and HTML using...
 
 I'd like to make the code easy to re-use if anyone wants to, hence public domain (or CC0 or WTFPL if you prefer). In this case I haven't really done much. It's a pretty simple mash-up. So it's fine to just take my code without crediting me, and I'd encourage you to do so. However...
 
-* Desecribed above are a bunch of (awesome) libraries and resources which are not bundled in this repo. Obviously covered by this license statement, though they're generally open licensed under various licenses.
+* Desecribed above are a bunch of (awesome) libraries and resources which are not bundled in this repo. Obviously not covered by this license statement, though they're generally open licensed under various licenses.
 * Also described above, I've used an open licensed photo image and in the code there is a haversine formula which is under GPL
 
