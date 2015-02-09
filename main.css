@@ -38,10 +38,13 @@ html, body, #map, #startScreen {
   width:100%;
 }
 
-
-body {
-  background-image:url('./bournemouth-centre.jpg'); /* image from http://www.geograph.org.uk/photo/509151 */
-  background-size: 100%;
+/* image from http://www.geograph.org.uk/photo/509151 */
+body { 
+  background: url('./bournemouth-centre.jpg') no-repeat center center fixed; 
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
 }
 
 #startScreen {
