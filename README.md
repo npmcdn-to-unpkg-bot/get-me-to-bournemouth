@@ -2,7 +2,7 @@
 
 Get me to bournemouth is a one button app (website) which gets you to Bournemouth.
 
-**[Try out 'Get me to Bournemouth' here](http://harrywood.co.uk/get-me-to-bournemouth)**
+**[Try out 'Get me to Bournemouth' here](https://harrywood.co.uk/get-me-to-bournemouth)**
  
 Click 'go' and it will detect your location and tell you how to travel to Bournemouth using [TransportAPI's public transport journey planning API](https://developer.transportapi.com/documentation/public-journey-planning).
 
